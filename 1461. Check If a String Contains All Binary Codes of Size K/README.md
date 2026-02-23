@@ -1,6 +1,15 @@
 1461. Check If a String Contains All Binary Codes of Size K
+Approach
+Use a sliding window of size k.
+Traverse the string:
+Whenever the window size becomes k, extract the substring.
+Insert it into a HashSet to keep only unique patterns.
+Slide the window forward by moving the left pointer.
+After traversal:
+Compute total possible codes = 2^k.
+If the set size equals 2^k, return true; otherwise false.
 
-1462. Example 1:
+1463. Example 1:
 
 Input: s = "00110110", k = 2
 Output: true
