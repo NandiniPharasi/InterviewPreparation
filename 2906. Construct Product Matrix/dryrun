@@ -1,0 +1,89 @@
+We have a matrix grid of size n × m. For every cell (i, j) we need to compute the product of all elements of the matrix except the one at (i, j), then take that product modulo 12345. The naive approach – for each cell multiply all other n*m - 1 elements – would cost O((n*m)²) operations, which is impossible when n*m can be as large as 100,000.
+
+Key Insight: If we flatten the matrix into a linear sequence of length total = n*m, the product “except self” for the element at linear position pos becomes (product of all elements before pos) × (product of all elements after pos). This is exactly the same trick used in the classic “Product of Array Except Self” problem.
+
+Here we are dealing with a 2D matrix, so we need to map between linear indices and (row, column) coordinates. By precomputing the “prefix product” for every position in the flattened order, then combining it with a running “suffix product” during a reverse pass, we can fill the result matrix in linear time.
+
+EXAMPLES OF WORK
+💠 Example 1:
+grid = [[1,2],[3,4]]
+Analysis:
+Flattened order: [1, 2, 3, 4]
+
+pos=0 (grid[0][0]=1): left product = 1, right product = 2×3×4 = 24 → result = 24
+pos=1 (grid[0][1]=2): left = 1, right = 3×4 = 12 → result = 12
+pos=2 (grid[1][0]=3): left = 1×2 = 2, right = 4 → result = 8
+pos=3 (grid[1][1]=4): left = 1×2×3 = 6, right = 1 → result = 6
+Answer:
+
+[[24,12],
+ [8,6]]
+💠 Example 2:
+grid = [[12345],[2],[1]]
+Analysis:
+Flattened order: [12345, 2, 1]
+
+pos=0 (12345): left = 1, right = 2×1 = 2 → result = 2
+pos=1 (2): left = 12345, right = 1 → result = 12345 % 12345 = 0
+pos=2 (1): left = 12345×2 = 24690, right = 1 → result = 24690 % 12345 = 0
+Answer:
+
+[[2],
+ [0],
+ [0]]
+LINE-BY-LINE EXPLANATION OF THE CODE
+STEP 1: SETUP AND FLATTENING
+public int[][] constructProductMatrix(int[][] grid) {
+    int n = grid.length, m = grid[0].length, MOD = 12345;
+    int total = n * m;
+What’s happening here:
+
+We store the matrix dimensions: n rows, m columns.
+MOD is the modulus we must apply to every product.
+total is the total number of elements; we’ll use it to treat the matrix as a linear array of length total.
+Why flatten? Flattening lets us apply the “prefix × suffix” pattern in just two passes, exactly like the classic “Product of Array Except Self” but with the extra step of converting between linear positions and matrix coordinates.
+
+STEP 2: PREFIX (LEFT) PRODUCTS
+    int[] left = new int[total];
+    left[0] = 1;
+    for (int pos = 1; pos < total; pos++) {
+        int prev_pos = pos - 1;
+        int prev_i = prev_pos / m;
+        int prev_j = prev_pos % m;
+        int prev_val = grid[prev_i][prev_j];
+        left[pos] = (int)((long)left[prev_pos] * prev_val % MOD);
+    }
+What’s happening here:
+
+We create an array left of size total to store the product of all elements before the current position in flattened order.
+left[0] = 1 because there are no elements before the first element.
+We loop from position 1 to total-1. For each pos, we need the value of the element at the previous linear index prev_pos.
+To get that value, we convert prev_pos to matrix coordinates: prev_i = prev_pos / m (row), prev_j = prev_pos % m (column). This is a standard technique: dividing by column count gives row, remainder gives column.
+We fetch grid[prev_i][prev_j] and multiply it with left[prev_pos] (the product of all elements before prev_pos). The result becomes left[pos], the product of all elements before pos.
+We use (long) to avoid overflow before taking modulo.
+Why this matters: After this loop, left[pos] holds the product of every element that appears earlier in the flattened order.
+
+STEP 3: COMBINING WITH SUFFIX PRODUCTS TO BUILD RESULT
+    int[][] dp = new int[n][m];
+    int right_prod = 1;
+    for (int pos = total - 1; pos >= 0; pos--) {
+        int i = pos / m;
+        int j = pos % m;
+        
+        dp[i][j] = (int)((long)left[pos] * right_prod % MOD);
+        
+        right_prod = (int)((long)right_prod * grid[i][j] % MOD);
+    }
+What’s happening here:
+
+We allocate the result matrix dp with the same dimensions as grid.
+
+right_prod keeps track of the product of all elements we have visited after the current position during the reverse traversal. Initially there are no elements after the last one, so right_prod = 1.
+
+We iterate pos from total-1 down to 0.
+
+For each pos, we convert it to matrix coordinates (i, j).
+
+The product of all elements except grid[i][j] is left[pos] * right_prod (all before × all after). We store it in dp[i][j] after applying modulo.
+
+Then we update right_prod by multiplying it with grid[i][j] (the current element). This means that when we move to the previous pos, right_prod will already contain the product of all elements to the right (i.e., those with larger linear indices).
