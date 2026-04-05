@@ -11,3 +11,4 @@ Two equivalent approaches:
 1. Simulate: maintain x and y, update per move, return x==0 and y==0.
 
 2. Count: return L==R and U==D — left/right cancel and up/down cancel. This is cleaner and avoids tracking coordinates entirely.
+<img width="688" height="1000" alt="image" src="https://github.com/user-attachments/assets/a48a6c05-6d6e-44a0-ba41-487c21959e15" />
