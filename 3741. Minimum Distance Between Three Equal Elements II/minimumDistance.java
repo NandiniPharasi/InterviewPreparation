@@ -1,3 +1,37 @@
+import java.util.*;
+
+class Solution {
+    public int minimumDistance(int[] nums) {
+        int n = nums.length;
+        if (n <= 2) return -1;
+
+        // Build array of (value, index)
+        int[][] arr = new int[n][2];
+        for (int i = 0; i < n; i++) {
+            arr[i][0] = nums[i];
+            arr[i][1] = i;
+        }
+
+        // Sort by value, then index
+        Arrays.sort(arr, (a, b) -> {
+            if (a[0] != b[0]) return Integer.compare(a[0], b[0]);
+            return Integer.compare(a[1], b[1]);
+        });
+
+        int ans = Integer.MAX_VALUE;
+
+        // Scan consecutive triples
+        for (int i = 0; i + 2 < n; i++) {
+            if (arr[i][0] == arr[i+1][0] && arr[i][0] == arr[i+2][0]) {
+                int dist = 2 * (arr[i+2][1] - arr[i][1]);
+                ans = Math.min(ans, dist);
+            }
+        }
+
+        return ans == Integer.MAX_VALUE ? -1 : ans;
+    }
+}
+
 class Solution {
     public int minimumDistance(int[] nums) {
           int n=nums.length;
